@@ -5,11 +5,14 @@ from snowflake_plugin.hooks.snowflake_hook import SnowflakeHook
 
 
 class S3ToSnowflakeOperator(BaseOperator):
+    template_fields = ('s3_key',)
+
     base_copy = """
         COPY INTO {snowflake_destination}
         FROM s3://{s3_bucket}/{s3_key} CREDENTIALS=(AWS_KEY_ID='{aws_access_key_id}' AWS_SECRET_KEY='{aws_secret_access_key}')
         FILE_FORMAT=(TYPE='{file_format_name}')
     """
+
 
     def __init__(self,
                  s3_bucket,
@@ -34,7 +37,12 @@ class S3ToSnowflakeOperator(BaseOperator):
         self.snowflake_conn_id = snowflake_conn_id
 
     def build_copy(self):
-        a_key, s_key = S3Hook(s3_conn_id=self.s3_conn_id).get_credentials()
+        s3_hook = S3Hook(self.s3_conn_id)
+        if hasattr(s3_hook,'get_credentials'):
+            a_key , s_key = s3_hook.get_credentials()
+        else:
+            a_key , s_key, _ ,_= s3_hook._get_credentials(region_name=None)
+
         snowflake_destination = ''
 
         if self.database:
@@ -60,4 +68,3 @@ class S3ToSnowflakeOperator(BaseOperator):
         sf_hook = SnowflakeHook(snowflake_conn_id=self.snowflake_conn_id).get_conn()
         sql = self.build_copy()
         sf_hook.cursor().execute(sql)
-
