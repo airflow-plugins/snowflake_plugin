@@ -12,6 +12,7 @@ class SnowflakeHook(BaseHook):
             self.account = self.extra_params.get('account', None)
             self.region = self.extra_params.get('region', None)
             self.database = self.extra_params.get('database', None)
+            self.role = self.extra_params.get('role', None)
             self.schema = self.extra_params.get('schema', None)
             self.warehouse = self.extra_params.get('warehouse', None)
 
@@ -22,6 +23,7 @@ class SnowflakeHook(BaseHook):
             account=self.account,
             region=self.region,
             database=self.database,
+            role=self.role,
             schema=self.schema,
             warehouse=self.warehouse
         )

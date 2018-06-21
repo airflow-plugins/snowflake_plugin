@@ -11,6 +11,7 @@ class S3ToSnowflakeOperator(BaseOperator):
         COPY INTO {snowflake_destination}
         FROM s3://{s3_bucket}/{s3_key} CREDENTIALS=(AWS_KEY_ID='{aws_access_key_id}' AWS_SECRET_KEY='{aws_secret_access_key}')
         FILE_FORMAT=(TYPE='{file_format_name}')
+        FORCE=TRUE
     """
 
 
