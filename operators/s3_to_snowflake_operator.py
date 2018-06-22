@@ -2,6 +2,8 @@ from airflow.hooks.S3_hook import S3Hook
 from airflow.plugins_manager import AirflowPlugin
 from airflow.models import BaseOperator
 from snowflake_plugin.hooks.snowflake_hook import SnowflakeHook
+from airflow.version import version as airflow_version
+from airflow.exceptions import AirflowException
 
 
 class S3ToSnowflakeOperator(BaseOperator):
@@ -41,8 +43,10 @@ class S3ToSnowflakeOperator(BaseOperator):
         s3_hook = S3Hook(self.s3_conn_id)
         if hasattr(s3_hook,'get_credentials'):
             a_key , s_key = s3_hook.get_credentials()
-        else:
+        elif hasattr(s3_hook,'_get_credentials'):
             a_key , s_key, _ ,_= s3_hook._get_credentials(region_name=None)
+        else:
+            raise AirflowException('{0} does not support airflow v{1}'.format(self.__class__.__name__,airflow_version))
 
         snowflake_destination = ''
 
