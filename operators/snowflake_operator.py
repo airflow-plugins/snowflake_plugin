@@ -3,7 +3,7 @@ from airflow.plugins_manager import AirflowPlugin
 from airflow.models import BaseOperator
 from snowflake_plugin.hooks.snowflake_hook import SnowflakeHook
 import io
-
+from jinja2 import Template
 
 class SnowflakeOperator(BaseOperator):
 
@@ -16,7 +16,7 @@ class SnowflakeOperator(BaseOperator):
 
         super(SnowflakeOperator, self).__init__(*args, **kwargs)
         self.snowflake_conn_id = snowflake_conn_id
-        self.query = query 
+        self.query = query
         self.role = role
         self.database = database
 
@@ -27,7 +27,6 @@ class SnowflakeOperator(BaseOperator):
         cs.execute("USE WAREHOUSE {0}".format(hook.warehouse))
         cs.execute("USE DATABASE {0}".format(self.database or hook.database))
         cs.execute("USE ROLE {0}".format(self.role or hook.role))
-        
         if self.query is not None:
             if isinstance(self.query, list):
                 query_sequence = self.query
@@ -40,6 +39,7 @@ class SnowflakeOperator(BaseOperator):
                     str_or_file.close()
                 else:
                     query = str_or_file
-
+                template = Template(query)
+                query = template.render(context)
                 cs.execute(query)
 
