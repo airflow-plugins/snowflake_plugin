@@ -7,6 +7,8 @@ from jinja2 import Template
 
 class SnowflakeOperator(BaseOperator):
 
+    template_fields = ('query',)
+
     def __init__(self,
                  query,
                  snowflake_conn_id='snowflake_default',
@@ -33,13 +35,6 @@ class SnowflakeOperator(BaseOperator):
             else:
                 query_sequence = [self.query]
 
-            for str_or_file in query_sequence:
-                if type(str_or_file) is io.TextIOWrapper:
-                    query = str_or_file.read()
-                    str_or_file.close()
-                else:
-                    query = str_or_file
-                template = Template(query)
-                query = template.render(context)
+            for query in query_sequence:
                 cs.execute(query)
 
