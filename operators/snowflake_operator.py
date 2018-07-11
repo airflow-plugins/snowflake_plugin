@@ -24,17 +24,8 @@ class SnowflakeOperator(BaseOperator):
 
 
     def execute(self, context):
-        hook = SnowflakeHook(snowflake_conn_id=self.snowflake_conn_id).get_conn()
-        cs = hook.cursor()
-        cs.execute("USE WAREHOUSE {0}".format(hook.warehouse))
-        cs.execute("USE DATABASE {0}".format(self.database or hook.database))
-        cs.execute("USE ROLE {0}".format(self.role or hook.role))
-        if self.query is not None:
-            if isinstance(self.query, list):
-                query_sequence = self.query
-            else:
-                query_sequence = [self.query]
-
-            for query in query_sequence:
-                cs.execute(query)
+        hook = SnowflakeHook(snowflake_conn_id=self.snowflake_conn_id)
+        if not self.query:
+            raise Exception("missing requeired argument 'query'")
+        hook.execute_sql(self.query)
 
