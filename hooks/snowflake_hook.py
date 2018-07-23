@@ -9,6 +9,7 @@ import json
 from airflow.utils.log.logging_mixin import LoggingMixin
 import time
 
+
 class SnowflakeHook(BaseHook, LoggingMixin):
     def __init__(self, snowflake_conn_id='snowflake_default'):
         self.snowflake_conn_id = snowflake_conn_id
@@ -24,7 +25,8 @@ class SnowflakeHook(BaseHook, LoggingMixin):
             self.schema = self.extra_params.get('schema', None)
             self.warehouse = self.extra_params.get('warehouse', None)
             self.private_key = self.extra_params.get('private_key', None)
-            self.private_key_password = self.extra_params.get('private_key_password', None)
+            self.private_key_password = self.extra_params.get(
+                'private_key_password', None)
 
     def get_conn(self):
         return snowflake.connector.connect(
@@ -38,30 +40,75 @@ class SnowflakeHook(BaseHook, LoggingMixin):
             warehouse=self.warehouse
         )
 
-    def pipe_insert_files(self,pipe,files,database=None,schema=None):
+    def pipe_insert_report(self, pipe, database=None, schema=None):
         database = database or self.database
         schema = schema or self.schema
         if self.private_key_password:
-            cert = load_pem_private_key(force_bytes(self.private_key),password=force_bytes(self.private_key_password),backend=default_backend())
+            cert = load_pem_private_key(
+                force_bytes(
+                    self.private_key), password=force_bytes(
+                    self.private_key_password), backend=default_backend())
         else:
-            cert = load_pem_private_key(force_bytes(self.private_key),password=None,backend=default_backend())
+            cert = load_pem_private_key(
+                force_bytes(
+                    self.private_key),
+                password=None,
+                backend=default_backend())
         now = time.time()
-        auth_token = jwt.encode({'iss': '{0}.{1}'.format(self.account.upper(), self.user.upper()), 'exp': now+ 3600, 'iat' :now }, cert,  algorithm='RS256');
-        body = {'files': list(map(lambda f: {'path': f }, files))}
+        auth_token = jwt.encode({'iss': '{0}.{1}'.format(self.account.upper(
+        ), self.user.upper()), 'exp': now + 3600, 'iat': now}, cert, algorithm='RS256')
+        uri = 'https://{account}.{region}.snowflakecomputing.com/v1/data/pipes/{database}.{schema}.{pipe}/insertReport'.format(account=self.account,
+                                                                                                                               region=self.region,
+                                                                                                                               pipe=pipe,
+                                                                                                                               database=database,
+                                                                                                                               schema=schema)
+        headers = {
+            'Authorization': 'Bearer {0}'.format(
+                auth_token.decode('UTF-8')),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'}
+        self.log.debug('executing pipe: {0}'.format(uri))
+        self.log.debug('with headers {0}:'.format(headers))
+        resp = requests.get(uri, headers=headers)
+        self.log.info('pipe response: {0}'.format(resp))
+        return resp
+
+    def pipe_insert_files(self, pipe, files, database=None, schema=None):
+        database = database or self.database
+        schema = schema or self.schema
+        if self.private_key_password:
+            cert = load_pem_private_key(
+                force_bytes(
+                    self.private_key), password=force_bytes(
+                    self.private_key_password), backend=default_backend())
+        else:
+            cert = load_pem_private_key(
+                force_bytes(
+                    self.private_key),
+                password=None,
+                backend=default_backend())
+        now = time.time()
+        auth_token = jwt.encode({'iss': '{0}.{1}'.format(self.account.upper(
+        ), self.user.upper()), 'exp': now + 3600, 'iat': now}, cert, algorithm='RS256')
+        body = {'files': list(map(lambda f: {'path': f}, files))}
         uri = 'https://{account}.{region}.snowflakecomputing.com/v1/data/pipes/{database}.{schema}.{pipe}/insertFiles'.format(account=self.account,
                                                                                                                               region=self.region,
-                                                                                                                              pipe= pipe,
-                                                                                                                              database= database,
-                                                                                                                              schema= schema)
+                                                                                                                              pipe=pipe,
+                                                                                                                              database=database,
+                                                                                                                              schema=schema)
 
-        headers= { 'Authorization': 'Bearer {0}'.format(auth_token.decode('UTF-8')), 'Accept':'application/json','Content-Type':'application/json' }
+        headers = {
+            'Authorization': 'Bearer {0}'.format(
+                auth_token.decode('UTF-8')),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'}
         self.log.debug('executing pipe: {0}'.format(uri))
         self.log.debug('with headers {0}:'.format(headers))
         self.log.debug('with body: {0}'.format(body))
-        resp = requests.post(uri,data=json.dumps(body) , headers= headers)
+        resp = requests.post(uri, data=json.dumps(body), headers=headers)
         self.log.info('pipe response: {0}'.format(resp))
 
-    def execute_sql(self,query,database=None,role=None):
+    def execute_sql(self, query, database=None, role=None):
         cs = self.get_conn().cursor()
         cs.execute("USE WAREHOUSE {0}".format(self.warehouse))
         cs.execute("USE DATABASE {0}".format(database or self.database))
