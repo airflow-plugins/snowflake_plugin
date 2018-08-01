@@ -8,6 +8,7 @@ import requests
 import json
 from airflow.utils.log.logging_mixin import LoggingMixin
 import time
+import uuid
 
 
 class SnowflakeHook(BaseHook, LoggingMixin):
@@ -73,7 +74,12 @@ class SnowflakeHook(BaseHook, LoggingMixin):
         self.log.info('pipe response: {0}'.format(resp))
         return resp
 
-    def pipe_insert_files(self, pipe, files, database=None, schema=None):
+    def pipe_insert_files(self,
+                          pipe,
+                          files,
+                          database=None,
+                          schema=None,
+                          request_id=None):
         database = database or self.database
         schema = schema or self.schema
         if self.private_key_password:
@@ -96,6 +102,9 @@ class SnowflakeHook(BaseHook, LoggingMixin):
                                                                                                                               pipe=pipe,
                                                                                                                               database=database,
                                                                                                                               schema=schema)
+        if request_id is None:
+            request_id = str(uuid.uuid4())
+        params = {'requestId': request_id}
 
         headers = {
             'Authorization': 'Bearer {0}'.format(
@@ -105,8 +114,18 @@ class SnowflakeHook(BaseHook, LoggingMixin):
         self.log.debug('executing pipe: {0}'.format(uri))
         self.log.debug('with headers {0}:'.format(headers))
         self.log.debug('with body: {0}'.format(body))
-        resp = requests.post(uri, data=json.dumps(body), headers=headers)
-        self.log.info('pipe response: {0}'.format(resp))
+        resp = requests.post(uri,
+                             data=json.dumps(body),
+                             headers=headers,
+                             params=params)
+        if resp.status_code != 200:
+            raise Exception(
+                '''failed to execute pipe, exited with error {0}'''.format(
+                    resp.text
+                )
+            )
+        self.log.info('pipe response: {0}'.format(resp.json()))
+        return resp.json()
 
     def execute_sql(self, query, database=None, role=None):
         cs = self.get_conn().cursor()
