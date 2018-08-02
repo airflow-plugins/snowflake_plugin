@@ -71,8 +71,8 @@ class SnowflakeHook(BaseHook, LoggingMixin):
         self.log.debug('executing pipe: {0}'.format(uri))
         self.log.debug('with headers {0}:'.format(headers))
         resp = requests.get(uri, headers=headers)
-        self.log.info('pipe response: {0}'.format(resp))
-        return resp
+        self.log.info('pipe response: {0}'.format(resp.json()))
+        return resp.json()
 
     def pipe_insert_files(self,
                           pipe,
