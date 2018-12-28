@@ -1,9 +1,6 @@
-from airflow.hooks.S3_hook import S3Hook
-from airflow.plugins_manager import AirflowPlugin
 from airflow.models import BaseOperator
 from snowflake_plugin.hooks.snowflake_hook import SnowflakeHook
-import io
-from jinja2 import Template
+
 
 class SnowflakeOperator(BaseOperator):
 
@@ -22,10 +19,8 @@ class SnowflakeOperator(BaseOperator):
         self.role = role
         self.database = database
 
-
     def execute(self, context):
         hook = SnowflakeHook(snowflake_conn_id=self.snowflake_conn_id)
         if not self.query:
             raise Exception("missing requeired argument 'query'")
         hook.execute_sql(self.query)
-
