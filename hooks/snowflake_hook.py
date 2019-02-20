@@ -6,12 +6,11 @@ from jwt.utils import force_bytes
 import jwt
 import requests
 import json
-from airflow.utils.log.logging_mixin import LoggingMixin
 import time
 import uuid
 
 
-class SnowflakeHook(BaseHook, LoggingMixin):
+class SnowflakeHook(BaseHook):
     def __init__(self, snowflake_conn_id='snowflake_default'):
         self.snowflake_conn_id = snowflake_conn_id
         self.snowflake_conn = self.get_connection(snowflake_conn_id)
