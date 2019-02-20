@@ -58,11 +58,12 @@ class SnowflakeHook(BaseHook, LoggingMixin):
         now = time.time()
         auth_token = jwt.encode({'iss': '{0}.{1}'.format(self.account.upper(
         ), self.user.upper()), 'exp': now + 3600, 'iat': now}, cert, algorithm='RS256')
-        uri = 'https://{account}.{region}.snowflakecomputing.com/v1/data/pipes/{database}.{schema}.{pipe}/insertReport'.format(account=self.account,
-                                                                                                                               region=self.region,
-                                                                                                                               pipe=pipe,
-                                                                                                                               database=database,
-                                                                                                                               schema=schema)
+        uri = 'https://{account}.{region}.snowflakecomputing.com/v1/' \
+              'data/pipes/{database}.{schema}.{pipe}/insertReport'.format(account=self.account,
+                                                                          region=self.region,
+                                                                          pipe=pipe,
+                                                                          database=database,
+                                                                          schema=schema)
         headers = {
             'Authorization': 'Bearer {0}'.format(
                 auth_token.decode('UTF-8')),
@@ -97,11 +98,12 @@ class SnowflakeHook(BaseHook, LoggingMixin):
         auth_token = jwt.encode({'iss': '{0}.{1}'.format(self.account.upper(
         ), self.user.upper()), 'exp': now + 3600, 'iat': now}, cert, algorithm='RS256')
         body = {'files': list(map(lambda f: {'path': f}, files))}
-        uri = 'https://{account}.{region}.snowflakecomputing.com/v1/data/pipes/{database}.{schema}.{pipe}/insertFiles'.format(account=self.account,
-                                                                                                                              region=self.region,
-                                                                                                                              pipe=pipe,
-                                                                                                                              database=database,
-                                                                                                                              schema=schema)
+        uri = 'https://{account}.{region}.snowflakecomputing.com/v1/' \
+              'data/pipes/{database}.{schema}.{pipe}/insertFiles'.format(account=self.account,
+                                                                         region=self.region,
+                                                                         pipe=pipe,
+                                                                         database=database,
+                                                                         schema=schema)
         if request_id is None:
             request_id = str(uuid.uuid4())
         params = {'requestId': request_id}

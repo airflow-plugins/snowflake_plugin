@@ -1,8 +1,6 @@
 from airflow.hooks.S3_hook import S3Hook
 from airflow.models import BaseOperator
 from snowflake_plugin.hooks.snowflake_hook import SnowflakeHook
-from airflow.version import version as airflow_version
-from airflow.exceptions import AirflowException
 
 
 class S3ToSnowflakePipeOperator(BaseOperator):

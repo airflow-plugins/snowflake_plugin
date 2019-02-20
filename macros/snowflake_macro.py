@@ -1,8 +1,9 @@
 
-def max(column, table,schema=None,snowflake_conn_id='snowflake_default', default=None):
+def max(column, table, schema=None, snowflake_conn_id='snowflake_default', default=None):
     """
     Gets the max value for a column.
-    :param table: The hive table you are interested in, database and schema are infered from connection unless specified in dot notation
+    :param table: The hive table you are interested in, database and schema are inhered from connection unless
+    specified in dot notation
     :type table: string
     :param snowflake_conn_id: The snowflake connection you are interested in.
     :type snowflake_conn_id: string
@@ -21,13 +22,11 @@ def max(column, table,schema=None,snowflake_conn_id='snowflake_default', default
     if schema:
         cs.execute("USE SCHEMA {0}".format(schema))
     cs.execute("USE ROLE {0}".format(hook.role))
-    columns = column if isinstance(column, list) else [colum]
-    columns = list(map(lambda c: "MAX({0})".format(c),columns))
-    query ="SELECT GREATEST({0}) FROM {1}".format(','.join(columns),table)
+    columns = column if isinstance(column, list) else [column]
+    columns = list(map(lambda c: "MAX({0})".format(c), columns))
+    query = "SELECT GREATEST({0}) FROM {1}".format(','.join(columns), table)
     row = cs.execute(query).fetchone()
     if row is None or row[0] is None:
         return default
     else:
         return row[0]
-
-
